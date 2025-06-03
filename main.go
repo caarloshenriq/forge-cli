@@ -6,7 +6,6 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/caarloshenriq/forge-cli/cmd"
-	"github.com/caarloshenriq/forge-cli/internal"
 )
 
 func main() {
@@ -37,7 +36,7 @@ func main() {
 		case "Generate README":
 			cmd.ReadmeCmd.Run(nil, nil)
 		case "Help":
-      internal.HelpInternal.Run(nil, nil)
+      cmd.HelpInternal.Run(nil, nil)
     case "Exit":
 			fmt.Println("Goodbye!")
 			os.Exit(0)
