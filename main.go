@@ -4,23 +4,42 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-  "github.com/caarloshenriq/forge-cli/cmd"
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/caarloshenriq/forge-cli/cmd"
 )
 
 func main() {
-	var rootCmd = &cobra.Command{
-		Use:   "forge-cli",
-		Short: "ForgeCLI is a toolkit with useful commands for developers",
-		Long:  "ForgeCLI combines tools like changelog generator, README generator, and more, into one CLI application.",
-	}
+	// Mensagem inicial (equivalente ao cobra rootCmd)
+	fmt.Println("ForgeCLI is a toolkit with useful commands for developers")
+	fmt.Println("ForgeCLI combines tools like changelog generator, README generator, and more, into one CLI application.\n")
 
-	// Add commands here
-	rootCmd.AddCommand(cmd.ChangelogCmd)
-	rootCmd.AddCommand(cmd.ReadmeCmd)
+	for {
+		var choice string
+		prompt := &survey.Select{
+			Message: "What do you want to do?",
+			Options: []string{
+				"Generate Changelog",
+				"Generate README",
+				"Exit",
+			},
+		}
 
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		err := survey.AskOne(prompt, &choice)
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+
+		switch choice {
+		case "Generate Changelog":
+			cmd.ChangelogCmd.Run(nil, nil)
+		case "Generate README":
+			cmd.ReadmeCmd.Run(nil, nil)
+		case "Exit":
+			fmt.Println("Goodbye!")
+			os.Exit(0)
+		}
+
+		fmt.Println() // Adiciona uma linha em branco após cada ação
 	}
 }
