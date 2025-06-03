@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/caarloshenriq/forge-cli/cmd"
+	"github.com/caarloshenriq/forge-cli/internal"
 )
 
 func main() {
@@ -19,6 +20,7 @@ func main() {
 			Options: []string{
 				"Generate Changelog",
 				"Generate README",
+        "Help",
 				"Exit",
 			},
 		}
@@ -34,7 +36,9 @@ func main() {
 			cmd.ChangelogCmd.Run(nil, nil)
 		case "Generate README":
 			cmd.ReadmeCmd.Run(nil, nil)
-		case "Exit":
+		case "Help":
+      internal.HelpInternal.Run(nil, nil)
+    case "Exit":
 			fmt.Println("Goodbye!")
 			os.Exit(0)
 		}
