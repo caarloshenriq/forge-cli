@@ -9,9 +9,8 @@ import (
 )
 
 func main() {
-	// Mensagem inicial (equivalente ao cobra rootCmd)
 	fmt.Println("ForgeCLI is a toolkit with useful commands for developers")
-	fmt.Println("ForgeCLI combines tools like changelog generator, README generator, and more, into one CLI application.\n")
+	fmt.Println("ForgeCLI combines tools like changelog generator, README generator, and more, into one CLI application.")
 
 	for {
 		var choice string
@@ -40,6 +39,6 @@ func main() {
 			os.Exit(0)
 		}
 
-		fmt.Println() // Adiciona uma linha em branco após cada ação
+		fmt.Println()
 	}
 }
