@@ -19,7 +19,7 @@ func main() {
 			Options: []string{
 				"Generate Changelog",
 				"Generate README",
-        "Help",
+				"Help",
 				"Exit",
 			},
 		}
@@ -36,8 +36,8 @@ func main() {
 		case "Generate README":
 			cmd.ReadmeCmd.Run(nil, nil)
 		case "Help":
-      cmd.HelpInternal.Run(nil, nil)
-    case "Exit":
+			cmd.HelpInternal.Run(nil, nil)
+		case "Exit":
 			fmt.Println("Goodbye!")
 			os.Exit(0)
 		}
