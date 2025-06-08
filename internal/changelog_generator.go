@@ -7,47 +7,98 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 )
 
-func GenerateChangelog() {
-	var version string
-	var date string
+func getLastCommitFromChangelog() string {
+	file, err := os.Open("CHANGELOG.md")
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
 
-	fmt.Print("Enter the version for this changelog (e.g., 1.0.0): ")
-	fmt.Scanln(&version)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "last-commit:") {
+			parts := strings.Split(line, ":")
+			if len(parts) == 2 {
+				return strings.TrimSpace(parts[1])
+			}
+		}
+		if strings.HasPrefix(line, "### Version") {
+			break
+		}
+	}
+	return ""
+}
 
-	fmt.Print("Enter the date for this changelog (e.g., 2023-10-01): ")
-	fmt.Scanln(&date)
-
-	cmd := exec.Command("git", "log", "--pretty=format:%s")
+func getGitLogSince(lastCommit string) ([]string, error) {
+	var cmd *exec.Cmd
+	if lastCommit != "" {
+		cmd = exec.Command("git", "log", fmt.Sprintf("%s..HEAD", lastCommit), "--pretty=format:%H|%s")
+	} else {
+		cmd = exec.Command("git", "log", "--pretty=format:%H|%s")
+	}
 	output, err := cmd.Output()
 	if err != nil {
-		fmt.Println("❌ Error running git log:", err)
+		return nil, err
+	}
+	lines := strings.Split(string(output), "\n")
+	return lines, nil
+}
+
+func GenerateChangelog() {
+	var version, date string
+	defaultDate := time.Now().Format("2006-01-02")
+
+	survey.AskOne(&survey.Input{
+		Message: "Enter the version for this changelog (e.g., 1.0.0):",
+	}, &version, survey.WithValidator(survey.Required))
+
+	survey.AskOne(&survey.Input{
+		Message: "Enter the date for this changelog:",
+		Default: defaultDate,
+	}, &date)
+
+	lastCommit := getLastCommitFromChangelog()
+	logLines, err := getGitLogSince(lastCommit)
+	if err != nil {
+		fmt.Println("❌ Error getting git log:", err)
 		return
 	}
-
-	lines := strings.Split(string(output), "\n")
 
 	var (
 		rawFeatures []string
 		rawFixes    []string
 		rawOthers   []string
+		latestHash  string
 
 		featPattern = regexp.MustCompile(`^feat(\(.+\))?:`)
 		fixPattern  = regexp.MustCompile(`^fix(\(.+\))?:`)
 	)
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
+	for i, line := range logLines {
+		parts := strings.SplitN(line, "|", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		hash := strings.TrimSpace(parts[0])
+		msg := strings.TrimSpace(parts[1])
+
+		if i == 0 {
+			latestHash = hash
+		}
+
 		switch {
-		case featPattern.MatchString(line):
-			rawFeatures = append(rawFeatures, line)
-		case fixPattern.MatchString(line):
-			rawFixes = append(rawFixes, line)
+		case featPattern.MatchString(msg):
+			rawFeatures = append(rawFeatures, msg)
+		case fixPattern.MatchString(msg):
+			rawFixes = append(rawFixes, msg)
 		default:
-			rawOthers = append(rawOthers, line)
+			rawOthers = append(rawOthers, msg)
 		}
 	}
 
@@ -77,36 +128,63 @@ func GenerateChangelog() {
 		}, &selectedOthers)
 	}
 
-	var changelog strings.Builder
-	changelog.WriteString("# Changelog\n\n")
-	changelog.WriteString("All notable changes to this project will be documented in this file.\n\n")
-	changelog.WriteString("The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\n")
-	changelog.WriteString("and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n")
-
-	changelog.WriteString("### Version " + version + " - " + date + "\n\n")
+	var newEntry strings.Builder
+	newEntry.WriteString(fmt.Sprintf("### Version %s - %s\n\n", version, date))
 
 	if len(selectedFeatures) > 0 {
-		changelog.WriteString("### Features\n")
+		newEntry.WriteString("### Features\n")
 		for _, feat := range selectedFeatures {
-			changelog.WriteString("- " + feat + "\n")
+			newEntry.WriteString("- " + feat + "\n")
 		}
-		changelog.WriteString("\n")
+		newEntry.WriteString("\n")
 	}
 
 	if len(selectedFixes) > 0 {
-		changelog.WriteString("### Fixes\n")
+		newEntry.WriteString("### Fixes\n")
 		for _, fix := range selectedFixes {
-			changelog.WriteString("- " + fix + "\n")
+			newEntry.WriteString("- " + fix + "\n")
 		}
-		changelog.WriteString("\n")
+		newEntry.WriteString("\n")
 	}
 
 	if len(selectedOthers) > 0 {
-		changelog.WriteString("### Other commits\n")
+		newEntry.WriteString("### Other commits\n")
 		for _, other := range selectedOthers {
-			changelog.WriteString("- " + other + "\n")
+			newEntry.WriteString("- " + other + "\n")
 		}
-		changelog.WriteString("\n")
+		newEntry.WriteString("\n")
+	}
+
+	if latestHash != "" {
+		newEntry.WriteString(fmt.Sprintf("<!-- last-commit: %s -->\n", latestHash))
+	}
+
+	const changelogHeader = `# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+`
+
+	existing, _ := os.ReadFile("CHANGELOG.md")
+	var finalContent strings.Builder
+
+	if len(existing) == 0 {
+		// arquivo ainda não existe
+		finalContent.WriteString(changelogHeader)
+		finalContent.WriteString("\n")
+		finalContent.WriteString(newEntry.String())
+	} else {
+		content := string(existing)
+		parts := strings.SplitN(content, "### Version", 2)
+
+		finalContent.WriteString(parts[0])
+		finalContent.WriteString(newEntry.String())
+		if len(parts) == 2 {
+			finalContent.WriteString("\n### Version")
+			finalContent.WriteString(parts[1])
+		}
 	}
 
 	file, err := os.Create("CHANGELOG.md")
@@ -117,7 +195,7 @@ func GenerateChangelog() {
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
-	_, err = writer.WriteString(changelog.String())
+	_, err = writer.WriteString(finalContent.String())
 	if err != nil {
 		fmt.Println("❌ Error writing changelog:", err)
 		return
