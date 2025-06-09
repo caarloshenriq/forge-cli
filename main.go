@@ -9,13 +9,12 @@ import (
 )
 
 func main() {
-	fmt.Println("ForgeCLI is a toolkit with useful commands for developers")
-	fmt.Println("ForgeCLI combines tools like changelog generator, README generator, and more, into one CLI application.")
+	fmt.Println("ForgeCLI is a toolkit with useful commands for developers, it combines tools like changelog generator, README generator, and more into one CLI application.")
 
 	for {
 		var choice string
 		prompt := &survey.Select{
-			Message: "What do you want to do?",
+			Message: "What do you want to do? (Press ESC to enable vim mode)",
 			Options: []string{
 				"Generate Changelog",
 				"Generate README",
