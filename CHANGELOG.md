@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Version 1.1.1 - 2025-06-09
 
 ### Features
+- feat(ui): clear terminal on module entry for better UX
+- feat(core): add interactive main menu as root command
 - feat(main): Improving description for better reading
 
 <!-- last-commit: b0467508c98ca3b0bcccef7653cc8c3891ca001c -->
