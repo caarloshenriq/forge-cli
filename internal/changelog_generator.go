@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/caarloshenriq/forge-cli/utils"
 )
 
 func getLastCommitFromChangelog() string {
+	utils.ClearScreen()
 	file, err := os.Open("CHANGELOG.md")
 	if err != nil {
 		return ""

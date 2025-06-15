@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/caarloshenriq/forge-cli/internal"
+	"github.com/caarloshenriq/forge-cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,7 @@ var ReadmeCmd = &cobra.Command{
 	Use:   "readme",
 	Short: "Generate a README.md with project info",
 	Run: func(cmd *cobra.Command, args []string) {
+		utils.ClearScreen()
 		var choice string
 		prompt := &survey.Select{
 			Message: "What do you want to do?",

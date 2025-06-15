@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/caarloshenriq/forge-cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -12,11 +13,13 @@ var HelpInternal = &cobra.Command{
 	Use:   "help",
 	Short: "Display help information for ForgeCLI",
 	Run: func(cmd *cobra.Command, args []string) {
+		utils.ClearScreen()
 		showHelpIndex()
 	},
 }
 
 func showHelpIndex() {
+	utils.ClearScreen()
 	fmt.Println("ForgeCLI - Help")
 	fmt.Println("-----------------------------------------------------")
 	fmt.Println("ForgeCLI is an open-source developer toolkit CLI.")
@@ -68,6 +71,7 @@ func showHelpIndex() {
 }
 
 func helpChangelog() {
+	utils.ClearScreen()
 	fmt.Println("📝 Changelog Generator - Help")
 	fmt.Println("-----------------------------------------------------")
 	fmt.Println("This command generates or updates your CHANGELOG.md file based on your Git commit history.")
@@ -88,6 +92,7 @@ func helpChangelog() {
 }
 
 func helpReadme() {
+	utils.ClearScreen()
 	fmt.Println("📄 README Generator - Help")
 	fmt.Println("-----------------------------------------------------")
 	fmt.Println("This command helps you create a structured README.md for your project.")
@@ -108,6 +113,7 @@ func helpReadme() {
 }
 
 func helpContribute() {
+	utils.ClearScreen()
 	fmt.Println("🤝 How to Contribute - Help")
 	fmt.Println("-----------------------------------------------------")
 	fmt.Println("We welcome contributions from the community! To get started:")

@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
+	"github.com/caarloshenriq/forge-cli/utils"
 )
 
 var rootCmd = &cobra.Command{
@@ -15,7 +15,7 @@ var rootCmd = &cobra.Command{
 	Long:  "ForgeCLI is a toolkit with useful commands for developers. It combines tools like changelog generator, README generator, and more into one CLI application.",
 	Run: func(cmd *cobra.Command, args []string) {
 		for {
-			clearScreen()
+			utils.ClearScreen()
 
 			var choice string
 			prompt := &survey.Select{
@@ -49,12 +49,6 @@ var rootCmd = &cobra.Command{
 			fmt.Println()
 		}
 	},
-}
-
-func clearScreen() {
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
 }
 
 func Execute() {
