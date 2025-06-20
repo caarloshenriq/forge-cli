@@ -38,18 +38,31 @@ func getLastCommitFromChangelog() string {
 }
 
 func getGitLogSince(lastCommit string) ([]string, error) {
-	var cmd *exec.Cmd
-	if lastCommit != "" {
-		cmd = exec.Command("git", "log", fmt.Sprintf("%s..HEAD", lastCommit), "--pretty=format:%H|%s")
-	} else {
-		cmd = exec.Command("git", "log", "--pretty=format:%H|%s")
-	}
+	cmd := exec.Command("git", "log", "--pretty=format:%H|%s", "--no-merges", "--date-order")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(output), "\n")
-	return lines, nil
+
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+
+	if lastCommit == "" {
+		return lines, nil
+	}
+
+	var filtered []string
+	found := false
+	for _, line := range lines {
+		if strings.HasPrefix(line, lastCommit) {
+			found = true
+			continue
+		}
+		if !found {
+			filtered = append(filtered, line)
+		}
+	}
+
+	return filtered, nil
 }
 
 func GenerateChangelog() {
