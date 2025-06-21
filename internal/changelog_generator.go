@@ -65,18 +65,123 @@ func getGitLogSince(lastCommit string) ([]string, error) {
 	return filtered, nil
 }
 
+func changelogVersionExists(version string) bool {
+	file, err := os.Open("CHANGELOG.md")
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	header := fmt.Sprintf("### Version %s ", version)
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), header) {
+			return true
+		}
+	}
+	return false
+}
+
+func printChangelogVersion(version string) (features, fixes, others []string) {
+	file, err := os.ReadFile("CHANGELOG.md")
+	if err != nil {
+		return
+	}
+
+	lines := strings.Split(string(file), "\n")
+	header := fmt.Sprintf("### Version %s ", version)
+
+	var (
+		found   bool
+		section []string
+	)
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "### Version ") {
+			if found {
+				break
+			}
+			if strings.HasPrefix(line, header) {
+				found = true
+			}
+		}
+		if found {
+			section = append(section, line)
+		}
+	}
+
+	if len(section) == 0 {
+		return
+	}
+
+	var current string
+	for _, line := range section {
+		switch {
+		case strings.HasPrefix(line, "### Features"):
+			current = "features"
+		case strings.HasPrefix(line, "### Fixes"):
+			current = "fixes"
+		case strings.HasPrefix(line, "### Other commits"):
+			current = "others"
+		case strings.HasPrefix(line, "- "):
+			item := strings.TrimPrefix(line, "- ")
+			switch current {
+			case "features":
+				features = append(features, item)
+			case "fixes":
+				fixes = append(fixes, item)
+			case "others":
+				others = append(others, item)
+			}
+		}
+	}
+
+	return
+}
+
 func GenerateChangelog() {
 	var version, date string
 	defaultDate := time.Now().Format("2006-01-02")
+	var selectedFeatures, selectedFixes, selectedOthers []string
+	var isAppending bool
 
-	survey.AskOne(&survey.Input{
-		Message: "Enter the version for this changelog (e.g., 1.0.0):",
-	}, &version, survey.WithValidator(survey.Required))
+	for {
+		survey.AskOne(&survey.Input{
+			Message: "Enter the version for this changelog (e.g., 1.0.0):",
+		}, &version, survey.WithValidator(survey.Required))
 
-	survey.AskOne(&survey.Input{
-		Message: "Enter the date for this changelog:",
-		Default: defaultDate,
-	}, &date)
+		if changelogVersionExists(version) {
+			var choice string
+			survey.AskOne(&survey.Select{
+				Message: fmt.Sprintf("⚠️ Version %s already exists. What do you want to do?", version),
+				Options: []string{
+					"Add new commits to this version",
+					"Cancel and input a new version",
+				},
+			}, &choice)
+
+			if choice == "Add new commits to this version" {
+				existingFeatures, existingFixes, existingOthers := printChangelogVersion(version)
+				selectedFeatures = append(selectedFeatures, existingFeatures...)
+				selectedFixes = append(selectedFixes, existingFixes...)
+				selectedOthers = append(selectedOthers, existingOthers...)
+				isAppending = true
+				break
+			}
+		} else {
+			break
+		}
+	}
+
+	if !isAppending {
+		survey.AskOne(&survey.Input{
+			Message: "Enter the date for this changelog:",
+			Default: defaultDate,
+		}, &date)
+	} else {
+		// Mesmo se for edição, mantenha a data antiga
+		date = defaultDate
+	}
 
 	lastCommit := getLastCommitFromChangelog()
 	logLines, err := getGitLogSince(lastCommit)
@@ -116,8 +221,6 @@ func GenerateChangelog() {
 			rawOthers = append(rawOthers, msg)
 		}
 	}
-
-	var selectedFeatures, selectedFixes, selectedOthers []string
 
 	if len(rawFeatures) > 0 {
 		survey.AskOne(&survey.MultiSelect{
@@ -183,22 +286,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 `
 
 	existing, _ := os.ReadFile("CHANGELOG.md")
-	var finalContent strings.Builder
+	content := string(existing)
+	var finalContent string
 
 	if len(existing) == 0 {
-		// arquivo ainda não existe
-		finalContent.WriteString(changelogHeader)
-		finalContent.WriteString("\n")
-		finalContent.WriteString(newEntry.String())
+		finalContent = changelogHeader + "\n" + newEntry.String()
+	} else if isAppending {
+		lines := strings.Split(content, "\n")
+		var builder strings.Builder
+		header := fmt.Sprintf("### Version %s ", version)
+		skipping := false
+	
+		for i := 0; i < len(lines); i++ {
+			line := lines[i]
+	
+			if strings.HasPrefix(line, "### Version ") {
+				if strings.HasPrefix(line, header) {
+					// Começamos a sobrescrever a versão existente
+					skipping = true
+					builder.WriteString(newEntry.String())
+					builder.WriteString("\n")
+					// Pular linhas até o próximo bloco de versão ou EOF
+					for i+1 < len(lines) && !strings.HasPrefix(lines[i+1], "### Version ") {
+						i++
+					}
+					continue
+				}
+			}
+	
+			// Só escreve se não estiver pulando
+			if !skipping {
+				builder.WriteString(line + "\n")
+			} else if strings.HasPrefix(line, "### Version ") {
+				// Terminamos de pular, voltar a escrever normalmente
+				skipping = false
+				builder.WriteString(line + "\n")
+			}
+		}
+	
+		finalContent = builder.String()
 	} else {
-		content := string(existing)
 		parts := strings.SplitN(content, "### Version", 2)
-
-		finalContent.WriteString(parts[0])
-		finalContent.WriteString(newEntry.String())
+		finalContent = parts[0] + newEntry.String()
 		if len(parts) == 2 {
-			finalContent.WriteString("\n### Version")
-			finalContent.WriteString(parts[1])
+			finalContent += "\n### Version" + parts[1]
 		}
 	}
 
@@ -210,7 +341,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
-	_, err = writer.WriteString(finalContent.String())
+	_, err = writer.WriteString(finalContent)
 	if err != nil {
 		fmt.Println("❌ Error writing changelog:", err)
 		return
