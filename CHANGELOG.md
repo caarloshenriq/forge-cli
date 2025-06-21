@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: complete help page implementation
 - feat(core): add interactive main menu as root command
 - feat(main): Improving description for better reading
+- feat(tests): adding tests and github actions
 
 ### Fixes
 - fix(changelog): filter only commits after last recorded hash
