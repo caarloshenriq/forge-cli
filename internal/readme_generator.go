@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/caarloshenriq/forge-cli/utils"
 	"github.com/chzyer/readline"
 )
 
@@ -21,8 +22,9 @@ type ReadmeTemplateData struct {
 func readMultilineInput(prompt string) string {
 	var response string
 	survey.AskOne(&survey.Multiline{
-		Message: prompt,
+		Message: prompt + " (type ':cancel' to abort)",
 	}, &response)
+	utils.CheckCancel(response)
 	return response
 }
 
@@ -32,6 +34,7 @@ func GenerateREADMEFromTemplate() {
 	survey.AskOne(&survey.Input{
 		Message: "What is the project name?",
 	}, &data.ProjectName, survey.WithValidator(survey.Required))
+	utils.CheckCancel(data.ProjectName)
 
 	data.Description = readMultilineInput("Enter project description")
 	data.Installation = readMultilineInput("Enter installation instructions")
@@ -40,6 +43,8 @@ func GenerateREADMEFromTemplate() {
 	survey.AskOne(&survey.Input{
 		Message: "License type (default MIT):",
 	}, &data.License)
+	utils.CheckCancel(data.License)
+
 	if data.License == "" {
 		data.License = "MIT"
 	}
@@ -83,13 +88,11 @@ func GenerateREADMEFromTemplate() {
 	fmt.Println("✅ README.md generated successfully!")
 }
 
-
-
 func GenerateReadmeFromScratch() {
 	var fileName string
 
 	fmt.Println("Write your README content from scratch:")
-	fmt.Println("(Use ↑ ↓ to navagate. Type ':done' on a new line to finish)")
+	fmt.Println("(Use ↑ ↓ to navagate. Type ':done' on a new line to finish or ':cancel' to cancel.)")
 
 	rl, err := readline.New("> ")
 	if err != nil {
@@ -104,6 +107,7 @@ func GenerateReadmeFromScratch() {
 		if err != nil {
 			break
 		}
+		utils.CheckCancel(line)
 		if strings.TrimSpace(line) == ":done" {
 			break
 		}
