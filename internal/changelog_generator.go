@@ -65,7 +65,7 @@ func getGitLogSince(lastCommit string) ([]string, error) {
 	return filtered, nil
 }
 
-func changelogVersionExists(version string) bool {
+func ChangelogVersionExists(version string) bool {
 	file, err := os.Open("CHANGELOG.md")
 	if err != nil {
 		return false
@@ -82,7 +82,7 @@ func changelogVersionExists(version string) bool {
 	return false
 }
 
-func printChangelogVersion(version string) (features, fixes, others []string) {
+func GetChangelogVersion(version string) (features, fixes, others []string) {
 	file, err := os.ReadFile("CHANGELOG.md")
 	if err != nil {
 		return
@@ -150,7 +150,7 @@ func GenerateChangelog() {
 			Message: "Enter the version for this changelog (e.g., 1.0.0):",
 		}, &version, survey.WithValidator(survey.Required))
 
-		if changelogVersionExists(version) {
+		if ChangelogVersionExists(version) {
 			var choice string
 			survey.AskOne(&survey.Select{
 				Message: fmt.Sprintf("⚠️ Version %s already exists. What do you want to do?", version),
@@ -161,7 +161,7 @@ func GenerateChangelog() {
 			}, &choice)
 
 			if choice == "Add new commits to this version" {
-				existingFeatures, existingFixes, existingOthers := printChangelogVersion(version)
+				existingFeatures, existingFixes, existingOthers := GetChangelogVersion(version)
 				selectedFeatures = append(selectedFeatures, existingFeatures...)
 				selectedFixes = append(selectedFixes, existingFixes...)
 				selectedOthers = append(selectedOthers, existingOthers...)
@@ -179,7 +179,6 @@ func GenerateChangelog() {
 			Default: defaultDate,
 		}, &date)
 	} else {
-		// Mesmo se for edição, mantenha a data antiga
 		date = defaultDate
 	}
 
