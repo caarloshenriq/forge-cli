@@ -1,13 +1,13 @@
 package internal
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
 	"text/template"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/chzyer/readline"
 )
 
 type ReadmeTemplateData struct {
@@ -19,24 +19,11 @@ type ReadmeTemplateData struct {
 }
 
 func readMultilineInput(prompt string) string {
-	fmt.Println(prompt + " (type ':done' to finish):")
-
-	scanner := bufio.NewScanner(os.Stdin)
-	var lines []string
-
-	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
-		}
-		line := scanner.Text()
-		if strings.TrimSpace(line) == ":done" {
-			break
-		}
-		lines = append(lines, line)
-	}
-
-	return strings.Join(lines, "\n")
+	var response string
+	survey.AskOne(&survey.Multiline{
+		Message: prompt,
+	}, &response)
+	return response
 }
 
 func GenerateREADMEFromTemplate() {
@@ -96,47 +83,51 @@ func GenerateREADMEFromTemplate() {
 	fmt.Println("✅ README.md generated successfully!")
 }
 
-func readFreeformContent(prompt string) string {
-	fmt.Println(prompt)
-	fmt.Println("(Type ':done' on a new line to finish)")
 
-	scanner := bufio.NewScanner(os.Stdin)
+
+func GenerateReadmeFromScratch() {
+	var fileName string
+
+	fmt.Println("Write your README content from scratch:")
+	fmt.Println("(Use ↑ ↓ to navagate. Type ':done' on a new line to finish)")
+
+	rl, err := readline.New("> ")
+	if err != nil {
+		fmt.Println("❌ Failed to initialize readline:", err)
+		return
+	}
+	defer rl.Close()
+
 	var lines []string
-
 	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
+		line, err := rl.Readline()
+		if err != nil {
 			break
 		}
-		line := scanner.Text()
 		if strings.TrimSpace(line) == ":done" {
 			break
 		}
 		lines = append(lines, line)
 	}
-	return strings.Join(lines, "\n")
-}
+	content := strings.Join(lines, "\n")
 
-func GenerateReadmeFromScratch() {
-	var fileName string = "README"
-	content := readFreeformContent("Write your README content from scratch:")
 	survey.AskOne(&survey.Input{
 		Message: "file name (default README):",
 		Default: "README",
-		}, &fileName)
-	
+	}, &fileName)
+
 	file, err := os.Create(fileName + ".md")
 	if err != nil {
-		fmt.Println("Error creating "+fileName+".md:", err)
+		fmt.Println("❌ Error creating "+fileName+".md:", err)
 		return
 	}
 	defer file.Close()
 
 	_, err = file.WriteString(content)
 	if err != nil {
-		fmt.Println("Error writing to "+fileName+".md:", err)
+		fmt.Println("❌ Error writing to "+fileName+".md:", err)
 		return
 	}
 
-	fmt.Println(fileName+".md created successfully from scratch!")
+	fmt.Println("✅ " + fileName + ".md created successfully from scratch!")
 }
