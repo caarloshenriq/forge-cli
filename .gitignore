@@ -18,3 +18,5 @@ vendor/
 *.test
 coverage.out
 
+# Added by goreleaser init:
+dist/
