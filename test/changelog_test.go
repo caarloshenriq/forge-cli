@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/caarloshenriq/forge-cli/internal"
+	"github.com/caarloshenriq/forge-cli/internal/changelog"
 )
 
 func TestPrintChangelogVersion(t *testing.T) {
@@ -29,7 +29,7 @@ func TestPrintChangelogVersion(t *testing.T) {
 	}
 	defer os.Remove("CHANGELOG.md")
 
-	features, fixes, others := internal.GetChangelogVersion("1.0.0")
+	features, fixes, others := changelog.GetChangelogVersion("1.0.0")
 
 	if len(features) != 1 || features[0] != "feat: add login" {
 		t.Errorf("expected feature not found")
@@ -59,17 +59,17 @@ func TestChangelogVersionExists(t *testing.T) {
 	defer os.Remove("CHANGELOG.md")
 
 	tests := []struct {
-		version   string
-		expected  bool
+		version  string
+		expected bool
 	}{
 		{"1.2.0", true},
 		{"1.0.0", false},
 	}
 
 	for _, tt := range tests {
-		result := internal.ChangelogVersionExists(tt.version)
+		result := changelog.ChangelogVersionExists(tt.version)
 		if result != tt.expected {
-			t.Errorf("changelogVersionExists(%q) = %v; want %v", tt.version, result, tt.expected)
+			t.Errorf("ChangelogVersionExists(%q) = %v; want %v", tt.version, result, tt.expected)
 		}
 	}
 }
