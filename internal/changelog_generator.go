@@ -139,7 +139,7 @@ func GetChangelogVersion(version string) (features, fixes, others []string) {
 	return
 }
 
-func GenerateChangelog() {
+func GenerateChangelog(fromTag string, toTag string) {
 	var version, date string
 	defaultDate := time.Now().Format("2006-01-02")
 	var selectedFeatures, selectedFixes, selectedOthers []string
@@ -295,34 +295,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 		var builder strings.Builder
 		header := fmt.Sprintf("### Version %s ", version)
 		skipping := false
-	
+
 		for i := 0; i < len(lines); i++ {
 			line := lines[i]
-	
+
 			if strings.HasPrefix(line, "### Version ") {
 				if strings.HasPrefix(line, header) {
-					// Começamos a sobrescrever a versão existente
 					skipping = true
 					builder.WriteString(newEntry.String())
 					builder.WriteString("\n")
-					// Pular linhas até o próximo bloco de versão ou EOF
 					for i+1 < len(lines) && !strings.HasPrefix(lines[i+1], "### Version ") {
 						i++
 					}
 					continue
 				}
 			}
-	
-			// Só escreve se não estiver pulando
+
 			if !skipping {
 				builder.WriteString(line + "\n")
 			} else if strings.HasPrefix(line, "### Version ") {
-				// Terminamos de pular, voltar a escrever normalmente
 				skipping = false
 				builder.WriteString(line + "\n")
 			}
 		}
-	
+
 		finalContent = builder.String()
 	} else {
 		parts := strings.SplitN(content, "### Version", 2)
