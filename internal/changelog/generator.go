@@ -14,41 +14,52 @@ func GenerateChangelog(fromTag string, toTag string) {
 	var version string
 	var entry types.ChangelogSection
 
-	for {
-		version = AskForVersion()
-		if ChangelogVersionExists(version) {
-			if ConfirmAppend(version) {
-				existingFeatures, existingFixes, existingOthers := GetChangelogVersion(version)
-				entry = types.ChangelogSection{
-					Version:  version,
-					Date:     defaultDate,
-					Features: existingFeatures,
-					Fixes:    existingFixes,
-					Others:   existingOthers,
-					Append:   true,
+	if fromTag != "" {
+		version = toTag
+		entry.Version = version
+		entry.Date = AskForDate(defaultDate)
+	} else {
+		for {
+			version = AskForVersion()
+			if ChangelogVersionExists(version) {
+				if ConfirmAppend(version) {
+					existingFeatures, existingFixes, existingOthers := GetChangelogVersion(version)
+					entry = types.ChangelogSection{
+						Version:  version,
+						Date:     defaultDate,
+						Features: existingFeatures,
+						Fixes:    existingFixes,
+						Others:   existingOthers,
+						Append:   true,
+					}
+					break
 				}
+			} else {
+				entry.Version = version
+				entry.Date = AskForDate(defaultDate)
 				break
 			}
-		} else {
-			entry.Version = version
-			entry.Date = AskForDate(defaultDate)
-			break
 		}
 	}
 
-	lastCommit := getLastCommitFromChangelog()
-	logLines, err := getGitLogSince(lastCommit)
+	var logLines []string
+	var err error
+
+	if fromTag != "" {
+		logLines, err = GetGitLogBetweenTags(fromTag, toTag)
+	} else {
+		lastCommit := getLastCommitFromChangelog()
+		logLines, err = getGitLogSince(lastCommit)
+	}
+
 	if err != nil {
 		fmt.Println("❌ Error getting git log:", err)
 		return
 	}
 
 	entry = classifyCommits(entry, logLines)
-
 	entry = PromptUserSelection(entry)
-
 	entry.Hash = GetLatestHash(logLines)
 
 	RenderChangelog(entry)
-
 }
