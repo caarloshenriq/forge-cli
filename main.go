@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/caarloshenriq/forge-cli/cmd"
+	"github.com/caarloshenriq/forge-cli/internal"
 )
 
 func main() {
-	cmd.Execute()
+	internal.RunTUI()
 }
