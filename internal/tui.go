@@ -13,7 +13,9 @@ var (
 	titleStyle = gloss.NewStyle().
 		Bold(true).
 		Foreground(gloss.Color("#00afff")).
-		Padding(1, 0).
+		PaddingLeft(2).
+		PaddingRight(1).
+		// MarginTop(10).
 		Align(gloss.Center)
 
 	cursorStyle = gloss.NewStyle().
