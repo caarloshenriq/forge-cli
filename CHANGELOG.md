@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### Version 5.5.5z - z
+
+### Features
+- feat(help): refact view
+- feat:(view) init TUI
+
+### Fixes
+- fix(readme): fixing arrow key issue
+- fix(changelog): filter only commits after last recorded hash
+
+### Other commits
+- test: correct changelog
+- Create LICENSE
+
+<!-- last-commit: 25ad4277505dc2d2f816aeb944c61faabfad26ae -->
+
 ### Version 1.0.0 - 2025-06-21
 
 ### Features

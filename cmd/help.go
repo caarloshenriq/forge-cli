@@ -112,7 +112,7 @@ func (m helpModel) View() string {
 			lines = append(lines, centerText(m.width, "  "+itemStyle.Render(opt)))
 		}
 	}
-	lines = append(lines, centerText(m.width, gloss.NewStyle().Italic(true).PaddingTop(3).Render("Use ↑ ↓ to navigate and press Enter to view a topic.")))
+	lines = append(lines, (centerText(m.width, gloss.NewStyle().Foreground(gloss.Color("#888888")).Italic(true).Render("\n↑/↓: navigate • enter: select • q: quit"))))
 	return strings.Join(lines, "\n")
 }
 

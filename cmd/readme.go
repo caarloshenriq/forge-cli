@@ -4,40 +4,24 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/caarloshenriq/forge-cli/internal"
 	"github.com/caarloshenriq/forge-cli/utils"
 	"github.com/spf13/cobra"
 )
 
+func runReadmeTUI() error {
+	utils.ClearScreen()
+	return internal.RunReadmeTUI()
+}
+
 var ReadmeCmd = &cobra.Command{
 	Use:   "readme",
-	Short: "Generate a README.md with project info",
-	Run: func(cmd *cobra.Command, args []string) {
-		utils.ClearScreen()
-		var choice string
-		prompt := &survey.Select{
-			Message: "What do you want to do?",
-			Options: []string{
-				"Generate from scratch",
-				"Generate from template",
-				"Back to main menu",
-			},
+	Short: "Generate a README.md using the interactive TUI (template or scratch, with snippets)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := runReadmeTUI(); err != nil {
+			fmt.Fprintf(os.Stderr, "README TUI error: %v\n", err)
+			return err
 		}
-
-		err := survey.AskOne(prompt, &choice)
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
-
-		switch choice {
-		case "Generate from scratch":
-			internal.GenerateReadmeFromScratch()
-		case "Generate from template":
-			internal.GenerateREADMEFromTemplate()
-		case "Exit":
-			return
-		}
+		return nil
 	},
 }
